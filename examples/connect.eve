@@ -1,0 +1,14 @@
+if we use -r the server isn't running yet, so we take a timeout
+
+Create an http connection to myself
+  [#session-connect]
+  freeze all
+    [#http-request host: "127.0.0.1:8080"
+                   url: "/ws"
+                   method: "GET"
+                   headers:[Upgrade: "websocket"
+                            Sec-WebSocket-Key: "dGhlIHNhbXBsZSBub25jZQ"]]
+
+handle the responses
+  [#http-response body]
+  
