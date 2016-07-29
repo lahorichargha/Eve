@@ -12,6 +12,7 @@ typedef struct websocket {
     buffer_handler write;
     timer keepalive;
     reader self;
+    u32 output_mask;
 } *websocket;
 
 typedef enum {
@@ -150,6 +151,29 @@ static void websocket_input_frame(websocket w, buffer b, register_read reg)
 
 void sha1(buffer d, buffer s);
 
+websocket new_websocket(heap h, register_read reg, buffer_handler down, buffer_handler up)
+{
+    websocket w = allocate(h, sizeof(struct websocket));
+    w->reassembly = allocate_buffer(h, 1000);
+    w->write = down;
+    w->client = up;
+    w->h = h;
+    w->output_mask = 0;
+    w->self = cont(h, websocket_input_frame, w);
+    apply(reg, w->self);
+    return w;
+}
+
+buffer_handler websocket_client(heap h,
+                                buffer_handler down,
+                                buffer_handler up,
+                                register_read reg)
+{
+    websocket w = new_websocket(h, reg, down, up);
+    return(cont(h, websocket_output_frame, w));
+}
+
+
 buffer_handler websocket_send_upgrade(heap h,
                                       bag b, 
                                       uuid n,
@@ -157,7 +181,7 @@ buffer_handler websocket_send_upgrade(heap h,
                                       buffer_handler up,
                                       register_read reg)
 {
-    websocket w = allocate(h, sizeof(struct websocket));
+    websocket w = new_websocket(h, reg, down, up);
     estring ekey;
     string key;
 
@@ -168,13 +192,6 @@ buffer_handler websocket_send_upgrade(heap h,
 
     key = allocate_buffer(h, ekey->length);
     buffer_append(key, ekey->body, ekey->length);
-    
-    // fix
-    w->reassembly = allocate_buffer(h, 1000);
-    w->write = down;
-    w->client = up;
-    w->h = h;
-
     string_concat(key, sstring("258EAFA5-E914-47DA-95CA-C5AB0DC85B11"));
     buffer sh = allocate_buffer(h, 20);
     sha1(sh, key);
@@ -189,8 +206,6 @@ buffer_handler websocket_send_upgrade(heap h,
 
     register_periodic_timer(seconds(5), cont(w->h, send_keepalive, w, allocate_buffer(w->h, 0)));
     apply(w->write, upgrade, ignore);
-    w->self = cont(h, websocket_input_frame, w);
-    apply(reg, w->self);
     return(cont(h, websocket_output_frame, w));
 }
 

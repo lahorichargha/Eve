@@ -109,7 +109,7 @@ static void shadow_p_by_t_and_f(evaluation ev, listener result,
         multibag_foreach(ev->t_solution, u, b) {
             total += count_of(b, e, a, v);
         }
-        
+
         if (total >= 0) {
             total = 0;
             table_foreach(ev->f_bags, u, _) {
@@ -275,9 +275,11 @@ static void fixedpoint(evaluation ev)
 
     // allow the deltas to also see the updated base by applying
     // them after
-    multibag_foreach(ev->solution, u, b) {
+    multibag_foreach(ev->t_solution, u, b) {
         bag bd;
+        prf("delta listeners: %v\n", bagname(ev, u));
         if ((bd = table_find(ev->persisted, u))) {
+            prf("delta listeners: %v\n", bagname(ev, u));
             table_foreach(bd->delta_listeners, t, _)
                 apply((bag_handler)t, b);
         }

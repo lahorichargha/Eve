@@ -7,6 +7,9 @@ static boolean enable_tracing = false;
 static buffer loadedParse;
 static char *exec_path;
 static int port = 8080;
+// defer these until after everything else has been set up
+static vector tests;
+
 #define register(__h, __url, __content, __name)\
  {\
     extern unsigned char __name##_start, __name##_end;\
@@ -34,28 +37,36 @@ extern void *ignore;
 static CONTINUATION_1_2(test_result, heap, table, table);
 static void test_result(heap h, table s, table c)
 {
-    table_foreach(s, n, v) {
-        prf("%v %b\n", n, bag_dump(h, v));
-    }
-    destroy(h);
+    if (s) {
+        table_foreach(s, n, v) {
+            prf("result: %v %b\n", n, bag_dump(h, v));
+        }
+    } else prf("result: empty\n");
 }
 
 static void run_test(bag root, buffer b, boolean tracing)
 {
     heap h = allocate_rolling(pages, sstring("command line"));
-    bag event = create_bag(h, generate_uuid());
-    table scopes = create_value_table(h);
-    table results = create_value_vector_table(h);
-    table_set(scopes, intern_cstring("all"), root);
-    table_set(scopes, intern_cstring("session"), event);
-    table_set(scopes, intern_cstring("transient"), event);
 
+    // todo - reduce the amount of setup required here
+    bag event = create_bag(h, generate_uuid());
+    bag session = create_bag(h, generate_uuid());
+    table scopes = create_value_table(h);
+    table_set(scopes, intern_cstring("all"), edb_uuid(root));
+    table_set(scopes, intern_cstring("session"), edb_uuid(session));
+    table_set(scopes, intern_cstring("event"), edb_uuid(event));
+    
+    table persisted = create_value_table(h);
+    table_set(persisted, edb_uuid(root), root);
+    table_set(persisted, edb_uuid(session), session);
+    
     buffer desc;
     vector n = compile_eve(h, b, tracing, &desc);
     vector_foreach(n, i)
-        edb_register_implication(event, i);
-    table persisted = create_value_table(h);
+        edb_register_implication(session, i);
+
     evaluation ev = build_evaluation(scopes, persisted, cont(h, test_result, h));
+    inject_event(ev, aprintf(h,"init!\n   maintain\n      [#session-connect]\n"), tracing);
     run_solver(ev);
     destroy(h);
 }
@@ -90,8 +101,7 @@ static void do_analyze(interpreter c, char *x, bag b)
 
 static void do_run_test(interpreter c, char *x, bag b)
 {
-    buffer f = read_file_or_exit(init, x);
-    run_test(b, f, enable_tracing);
+    vector_insert(tests, x);
 }
 
 static void do_exec(interpreter c, char *x, bag b)
@@ -117,7 +127,7 @@ static void print_help(interpreter c, char *x, bag b)
 static struct command command_body[] = {
     {"p", "parse", "parse and print structure", true, do_parse},
     {"a", "analyze", "parse order print structure", true, do_analyze},
-    //    {"r", "run", "execute eve", true, do_run_test},
+    {"r", "run", "execute eve", true, do_run_test},
     //    {"s", "serve", "serve urls from the given root path", true, 0},
     {"e", "exec", "use eve as default path", true, do_exec},
     {"P", "port", "serve http on passed port", true, do_port},
@@ -133,8 +143,10 @@ int main(int argc, char **argv)
     interpreter interp = build_lua();
     commands = command_body;
     boolean dynamicReload = true;
+    tests = allocate_vector(init, 5);
 
-    char * file = "";
+    init_request_service(root);
+        
     for (int i = 1; i < argc ; i++) {
         command c = 0;
         for (int j = 0; !c &&(j < sizeof(command_body)/sizeof(struct command)); j++) {
@@ -168,7 +180,13 @@ int main(int argc, char **argv)
     // TODO: figure out a better way to manage multiple graphs
     init_json_service(h, root, enable_tracing, loadedParse, exec_path);
 
+
+
     prf("\n----------------------------------------------\n\nEve started. Running at http://localhost:%d\n\n",port);
+
+    vector_foreach(tests, t) 
+        run_test(root, read_file_or_exit(init, t), enable_tracing);
+        
     unix_wait();
 }
 

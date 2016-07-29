@@ -51,3 +51,8 @@ typedef closure(header_handler, bag, uuid, buffer, register_read);
 
 reader response_header_parser(heap h, header_handler result_handler);
 reader request_header_parser(heap h, header_handler result_handler);
+
+typedef struct client *client;
+client open_http_client(heap h, bag s, uuid request, http_handler response);
+
+void http_send_header(buffer_handler w, bag b, uuid n, value first, value second, value third);

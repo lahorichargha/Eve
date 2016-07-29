@@ -76,3 +76,5 @@ void udp_write(udp, station, buffer);
 void prf(char *, ...);
 
 extern station ip_wildcard_service;
+// not really unix
+station station_from_string(heap h, buffer b);
