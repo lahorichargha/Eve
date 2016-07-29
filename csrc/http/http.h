@@ -1,9 +1,11 @@
 typedef struct http_server *http_server;
 http_server create_http_server(station p);
 
+void http_send_request(buffer_handler w, bag b, uuid n);
+
 void send_http_response(heap h,
                         buffer_handler write,
-                        string type, 
+                        string type,
                         buffer b);
 
 void register_http_service(http_server s,
@@ -19,7 +21,7 @@ void register_http_file(http_server s,
 string base64_encode(heap h, buffer x);
 
 void register_websocket_service(heap h,
-                                http_server s, 
+                                http_server s,
                                 string url,
                                 thunk connect);
 
@@ -33,7 +35,7 @@ void register_static_content(http_server h, char *url, char *content_type, buffe
 typedef closure(http_handler, bag, uuid, station, buffer_handler);
 
 buffer_handler websocket_send_upgrade(heap h,
-                                      bag b, 
+                                      bag b,
                                       uuid n,
                                       buffer_handler down,
                                       buffer_handler up,

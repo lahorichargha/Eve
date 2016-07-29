@@ -70,6 +70,7 @@ static void json_input(json_parser p, buffer b, thunk t)
         return;
     }
 
+    prf("json input: %b\n", b);
     // xxx - use foreach rune
     string_foreach(b, c) {
 

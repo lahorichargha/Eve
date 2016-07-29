@@ -1,6 +1,5 @@
-if we use -r the server isn't running yet, so we take a timeout
-
-Create an http connection to myself
+Create an http connection to myself. try to create a correlator between
+request and response
   [#session-connect]
   freeze all
     [#http-request host: "127.0.0.1:8080"
@@ -9,6 +8,17 @@ Create an http connection to myself
                    headers:[Upgrade: "websocket"
                             Sec-WebSocket-Key: "dGhlIHNhbXBsZSBub25jZQ"]]
 
-handle the responses
-  [#http-response body]
+handle the responses - it would be cool if we could express continuations
+  [#json-response body]
+
+
+click on a guy - this is a maintain right?
+  [#click entity session]
+  maintain
+     [#json-request session 
+       message: [scope:event
+                 type:query
+                 query:"handle some event\n maintain \n [#click #direct-target element:{{entity}}]"]]
+
+    
   
