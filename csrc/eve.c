@@ -68,7 +68,7 @@ static void run_test(bag root, buffer b, boolean tracing)
     evaluation ev = build_evaluation(scopes, persisted, cont(h, test_result, h));
     inject_event(ev, aprintf(h,"init!\n   maintain\n      [#session-connect]\n"), tracing);
     run_solver(ev);
-    destroy(h);
+    //    destroy(h);
 }
 
 

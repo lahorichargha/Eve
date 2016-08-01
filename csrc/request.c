@@ -1,10 +1,23 @@
 #include <runtime.h>
 #include <http/http.h>
 
-static CONTINUATION_2_4(response, bag, uuid,
-                        bag, uuid, station, buffer_handler);
-static void response(bag b, uuid req, bag resp, uuid r, station s, buffer_handler bh)
+typedef struct request {
+    heap h;
+    bag b;
+    uuid req;
+} *request;
+
+static CONTINUATION_1_1(json_input, r, b);
+static void json_input(request r, buffer b)
 {
+}
+
+static CONTINUATION_1_4(response, request,
+                        bag, uuid, buffer, register_read);
+static void response(request r, bag resp, uuid r, buffer s, register_read reg)
+{
+    websocket_client(r->h, json, closure(r->h, json_input, r));
+    prf("response: %b\n", bag_dump(init, resp));
 }
 
 static CONTINUATION_1_1(bag_update, bag, bag);

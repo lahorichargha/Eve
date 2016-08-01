@@ -133,5 +133,5 @@ reader request_header_parser(heap h, header_handler result_handler)
 
 reader response_header_parser(heap h, header_handler result_handler)
 {
-    return new_guy(h, result_handler, sym(method), sym(url), sym(version));
+    return new_guy(h, result_handler, sym(version), sym(status), sym(reason));
 }

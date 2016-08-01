@@ -16,8 +16,8 @@ click on a guy - this is a maintain right?
   [#click entity session]
   maintain
      [#json-request session 
-       message: [scope:event
-                 type:query
+       message: [scope:"event"
+                 type:"query"
                  query:"handle some event\n maintain \n [#click #direct-target element:{{entity}}]"]]
 
     
