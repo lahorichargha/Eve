@@ -32,6 +32,12 @@ static boolean compare_sets(table set, table retain, table destroy)
         if (!s != !d) return false;
         if (s) {
             if (edb_size(d) != edb_size(s)){
+              /* prf("Mismatched sizes, outtie!\n"); */
+              /*   bag_foreach(s, e, a, v, c, _) { */
+              /*       if (count_of(d, e, a, v) != c) { */
+              /*         prf("EAV, %v %v %v %d --> %d\n", e, a, v, c, count_of(d, e, a, v)); */
+              /*       } */
+              /*   } */
                 return false;
             }
             bag_foreach(s, e, a, v, c, _) {
