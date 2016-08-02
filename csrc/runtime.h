@@ -163,4 +163,4 @@ void init_request_service(bag b);
 
 #include <edb.h>
 
-
+typedef closure(bag_handler, evaluation, bag);

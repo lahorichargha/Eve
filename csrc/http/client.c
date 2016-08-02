@@ -6,7 +6,7 @@ struct client {
     heap h;
     bag b;
     uuid request;
-    header_handler response;
+    http_handler response;
     vector queued;
 };
 
@@ -29,7 +29,7 @@ static void client_connected(client c, buffer_handler w, register_read r)
     apply(r, response_header_parser(c->h, c->response));
 }
 
-client open_http_client(heap h, bag b, uuid request, header_handler response)
+client open_http_client(heap h, bag b, uuid request, http_handler response)
 {
     station a;
     estring host = lookupv(b, request, sym(host));
@@ -44,15 +44,14 @@ client open_http_client(heap h, bag b, uuid request, header_handler response)
     // extract the host from the head of the url if not specified
     // fix fako split
     string location = allocate_string(h);
-    
+
     string_foreach(url, i) {
         if (i == '/') break;
         string_insert(location, i);
     }
-#endif    
+#endif
     tcp_create_client (h,
                        station_from_string(h, alloca_wrap_buffer(host->body, host->length)),
                        cont(h, client_connected, c));
     return c;
 }
-

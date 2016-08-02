@@ -59,14 +59,15 @@ typedef struct json_parser {
     uuid n,pu;
     states s;
     boolean backslash;
+    reader self;
 } *json_parser;
 
 
-static CONTINUATION_1_2(json_input, json_parser, buffer, thunk);
-static void json_input(json_parser p, buffer b, thunk t)
+static CONTINUATION_1_2(json_input, json_parser, buffer, register_read);
+static void json_input(json_parser p, buffer b, register_read reg)
 {
     if (!b) {
-        apply(p->out, 0, 0, t);
+        apply(p->out, 0, 0);
         return;
     }
 
@@ -76,6 +77,7 @@ static void json_input(json_parser p, buffer b, thunk t)
 
         // create a bag for this message if one doesn't exist
         if (!p->b) {
+            p->pu = generate_uuid();
             p->b = create_bag(p->h, p->pu);
             p->n = generate_uuid();
         }
@@ -91,7 +93,7 @@ static void json_input(json_parser p, buffer b, thunk t)
         }
 
         if ((c == '}')  && (p->s == sep)) {
-            apply(p->out, p->b, p->n, t);
+            apply(p->out, p->b, p->pu);
             p->b = 0;
             p->s = 0;
             p->backslash = false;
@@ -112,16 +114,17 @@ static void json_input(json_parser p, buffer b, thunk t)
             }
         }
     }
+    apply(reg, p->self);
 }
 
-buffer_handler parse_json(heap h, uuid pu, json_handler j)
+reader parse_json(heap h, json_handler j)
 {
     json_parser p= allocate(h, sizeof(struct json_parser));
     p->h = h;
     p->tag = allocate_buffer(h, 10);
     p->value = allocate_buffer(h, 10);
-    p->pu= pu;
     p->b = 0;
     p->out = j;
-    return(cont(h, json_input, p));
+    p->self = cont(h, json_input, p);
+    return(p->self);
 }

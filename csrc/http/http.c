@@ -24,14 +24,15 @@ typedef enum {
 } header_state;
 
 typedef struct header_parser {
-   header_handler h;
-   bag b;
-   uuid u;
-   buffer term;
-   estring name;
-   header_state s;
-   value headers[3];
-   reader self;
+    heap h;
+    http_handler up;
+    bag b;
+    uuid u;
+    buffer term;
+    estring name;
+    header_state s;
+    value headers[3];
+    reader self;
 } *header_parser;
 
 extern void *ignore;
@@ -63,7 +64,7 @@ static void parse_http_header(header_parser p, buffer b, register_read reg)
     int count = 0;
 
     if (b == 0) {
-        apply(p->h, 0, 0, 0, 0);
+        apply(p->up, 0, 0, 0);
         return;
     }
 
@@ -80,7 +81,7 @@ static void parse_http_header(header_parser p, buffer b, register_read reg)
             switch(p->s) {
             case header_end:
                 buffer_consume(b, count);
-                apply(p->h, p->b, p->u, b, reg);
+                apply(p->up, p->b, p->u, requeue(p->h, b, reg));
                 return;
 
             case method:
@@ -109,10 +110,11 @@ static void parse_http_header(header_parser p, buffer b, register_read reg)
 }
 
 
-reader new_guy(heap h, header_handler result, value a, value b, value c)
+reader new_guy(heap h, http_handler result, value a, value b, value c)
 {
     header_parser p = allocate(h, sizeof(struct header_parser));
-    p->h = result;
+    p->h = h;
+    p->up = result;
     p->b = create_bag(h, 0); //uuid? - take a bag?
     p->u = generate_uuid();
     p->s = 0;
@@ -125,13 +127,13 @@ reader new_guy(heap h, header_handler result, value a, value b, value c)
 }
 
 
-reader request_header_parser(heap h, header_handler result_handler)
+reader request_header_parser(heap h, http_handler result_handler)
 {
     return new_guy(h, result_handler, sym(method), sym(url), sym(version));
 }
 
 
-reader response_header_parser(heap h, header_handler result_handler)
+reader response_header_parser(heap h, http_handler result_handler)
 {
     return new_guy(h, result_handler, sym(version), sym(status), sym(reason));
 }

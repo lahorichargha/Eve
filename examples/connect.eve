@@ -2,11 +2,9 @@ Create an http connection to myself. try to create a correlator between
 request and response
   [#session-connect]
   freeze all
-    [#http-request host: "127.0.0.1:8080"
-                   url: "/ws"
-                   method: "GET"
-                   headers:[Upgrade: "websocket"
-                            Sec-WebSocket-Key: "dGhlIHNhbXBsZSBub25jZQ"]]
+    [#websocket-request host: "127.0.0.1:8080"
+                        url: "/ws"
+                        method: "GET"]
 
 handle the responses - it would be cool if we could express continuations
   [#json-response body]
@@ -15,10 +13,7 @@ handle the responses - it would be cool if we could express continuations
 click on a guy - this is a maintain right?
   [#click entity session]
   maintain
-     [#json-request session 
+     [#json-request session
        message: [scope:"event"
                  type:"query"
                  query:"handle some event\n maintain \n [#click #direct-target element:{{entity}}]"]]
-
-    
-  

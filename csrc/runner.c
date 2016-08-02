@@ -32,12 +32,6 @@ static boolean compare_sets(table set, table retain, table destroy)
         if (!s != !d) return false;
         if (s) {
             if (edb_size(d) != edb_size(s)){
-              /* prf("Mismatched sizes, outtie!\n"); */
-              /*   bag_foreach(s, e, a, v, c, _) { */
-              /*       if (count_of(d, e, a, v) != c) { */
-              /*         prf("EAV, %v %v %v %d --> %d\n", e, a, v, c, count_of(d, e, a, v)); */
-              /*       } */
-              /*   } */
                 return false;
             }
             bag_foreach(s, e, a, v, c, _) {
@@ -162,9 +156,9 @@ static boolean merge_solution_into_t(evaluation ev, uuid u, bag s)
     bag bd;
     boolean result = false;
 
-    if (!ev->t_solution) 
+    if (!ev->t_solution)
         ev->t_solution = create_value_table(ev->working);
-    
+
     if (!(bd = table_find(ev->t_solution, u))) {
         table_set(ev->t_solution, u, s);
         return true;
@@ -246,11 +240,11 @@ static void fixedpoint(evaluation ev)
             vector_foreach(ev->blocks, b)
                 run_block(ev, b);
         } while(!compare_sets(ev->f_bags, ev->solution, ev->last_f_solution));
-        
+
         multibag_foreach(ev->solution, u, b)
             if (table_find(ev->persisted, u))
                 again |= merge_solution_into_t(ev, u, b);
-        
+
         vector_insert(counts, box_float((double)iterations));
         iterations = 0;
         ev->event_blocks = 0;
@@ -285,7 +279,7 @@ static void fixedpoint(evaluation ev)
         if ((bd = table_find(ev->persisted, u))) {
             prf("delta listeners: %v\n", bagname(ev, u));
             table_foreach(bd->delta_listeners, t, _)
-                apply((bag_handler)t, b);
+                apply((bag_handler)t, ev, b);
         }
     }
 
